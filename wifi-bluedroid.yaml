@@ -1,0 +1,13 @@
+---
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  min_auth_mode: WPA2
+  use_psram: true
+  on_connect:
+    # Hosted C6: bring WiFi up before Bluedroid init (same pattern as guition-dashboard4)
+    - delay: 8s
+    - ble.enable:
+  ap:
+    password: "password"

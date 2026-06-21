@@ -1,0 +1,43 @@
+# Pre-build: add REQUIRES mbedtls to src/CMakeLists.txt.
+# PlatformIO and native-IDF ESPHome layouts differ; src must declare mbedtls
+# explicitly or decrypt_payload_ fails to link mbedtls_aes_* symbols.
+Import("env")  # noqa: F821
+
+from pathlib import Path
+
+cmake = Path(env["PROJECT_DIR"]) / "src" / "CMakeLists.txt"  # noqa: F821
+if not cmake.is_file():
+    raise SystemExit(0)
+
+text = cmake.read_text(encoding="utf-8")
+if "mbedtls" in text:
+    raise SystemExit(0)
+
+replacements = [
+    (
+        "REQUIRES ${ESPHOME_PROJECT_BUILTIN_COMPONENTS}",
+        "REQUIRES ${ESPHOME_PROJECT_BUILTIN_COMPONENTS} mbedtls",
+    ),
+    (
+        "idf_component_register(SRCS ${app_sources})",
+        "idf_component_register(SRCS ${app_sources} REQUIRES mbedtls)",
+    ),
+]
+
+for needle, replacement in replacements:
+    if needle in text:
+        cmake.write_text(text.replace(needle, replacement, 1), encoding="utf-8")
+        print("nimble_victron: added REQUIRES mbedtls to src/CMakeLists.txt")
+        raise SystemExit(0)
+
+# Multi-line idf_component_register without REQUIRES at all
+if "idf_component_register(" in text and "REQUIRES" not in text:
+    cmake.write_text(
+        text.replace(
+            "idf_component_register(",
+            "idf_component_register(\n    REQUIRES mbedtls",
+            1,
+        ),
+        encoding="utf-8",
+    )
+    print("nimble_victron: added REQUIRES mbedtls to src/CMakeLists.txt")

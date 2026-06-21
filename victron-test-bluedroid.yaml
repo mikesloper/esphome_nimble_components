@@ -1,0 +1,46 @@
+---
+# Victron SmartShunt test — Bluedroid stack + Fabian-Schmidt esphome-victron_ble.
+# Compare heap/RAM against victron-test.yaml (NimBLE nimble_victron).
+#
+# Build (fork venv):
+#   esphome compile victron-test-bluedroid.yaml
+#   esphome upload victron-test-bluedroid.yaml
+#
+# Requires secrets.yaml with wifi_ssid / wifi_password.
+
+esphome:
+  name: victron-bluedroid
+  min_version: 2026.3.0
+
+logger:
+  level: debug
+
+api:
+
+packages:
+  wifi: !include wifi-bluedroid.yaml
+  hardware: !include guition-esp32-p4-bluedroid.yaml
+  victron: !include victron/smartshunt-bluedroid.yaml
+
+debug:
+  update_interval: 10s
+
+sensor:
+  - platform: debug
+    free:
+      name: "Free Internal Heap"
+    block:
+      name: "Largest Free Block (Internal)"
+    min_free:
+      name: "Min Free Heap (Internal)"
+    fragmentation:
+      name: "Heap Fragmentation"
+    psram:
+      name: "Free PSRAM"
+    loop_time:
+      name: "Loop Time"
+
+  - platform: uptime
+    name: "Uptime Minutes"
+    filters:
+      - lambda: return x / 60;

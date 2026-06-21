@@ -6,6 +6,11 @@
 esphome:
   name: victron-nimble
   min_version: 2026.3.0
+  platformio_options:
+    # build_flags:
+    #   - -D MBEDTLS_CONFIG_FILE='<mbedtls/esp_config.h>'
+
+
 
 external_components:
   - source:

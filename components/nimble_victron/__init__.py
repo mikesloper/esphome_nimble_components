@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import sensor
+from esphome.components import esp32, sensor
 from esphome.const import CONF_BINDKEY, CONF_ID, CONF_MAC_ADDRESS
 from esphome.yaml_util import ESPHomeDumper
 
@@ -72,6 +74,18 @@ CONFIG_SCHEMA = cv.All(
 
 
 async def to_code(config):
+    # esp32.add_extra_script(
+    #     "pre",
+    #     "nimble_victron_mbedtls.py",
+    #     Path(__file__).with_name("patch_src_cmake_mbedtls.py.script"),
+    # )
+
+    
+    # Inject PlatformIO flags dynamically via Python code
+    cg.add_platformio_option(
+        "build_flags", 
+        ["-DMBEDTLS_CONFIG_FILE='<mbedtls/esp_config.h>'"]
+    )
     var = cg.new_Pvariable(config[CONF_ID])
 
     host = await cg.get_variable(config[CONF_NIMBLE_HOST_ID])

@@ -1,0 +1,45 @@
+# Victron SmartShunt via Fabian-Schmidt esphome-victron_ble (Bluedroid scan-only).
+# Bindkey: VictronConnect → Settings → Product info → VRM → Encryption data.
+---
+external_components:
+  - source: github://Fabian-Schmidt/esphome-victron_ble
+
+victron_ble:
+  - id: vshunt_ble_id
+    mac_address: F8:CF:3D:F9:2C:7F
+    bindkey: "1767024d6f11f81d9a7d021e278b24e9"
+
+sensor:
+  - platform: victron_ble
+    victron_ble_id: vshunt_ble_id
+    name: "Shunt Battery Voltage"
+    type: BATTERY_VOLTAGE
+
+  - platform: victron_ble
+    victron_ble_id: vshunt_ble_id
+    name: "Shunt Battery Current"
+    type: BATTERY_CURRENT
+    accuracy_decimals: 2
+
+  - platform: victron_ble
+    victron_ble_id: vshunt_ble_id
+    name: "Shunt SOC"
+    type: STATE_OF_CHARGE
+    accuracy_decimals: 1
+
+  - platform: victron_ble
+    victron_ble_id: vshunt_ble_id
+    name: "Shunt Consumed Ah"
+    type: CONSUMED_AH
+    accuracy_decimals: 2
+
+  - platform: victron_ble
+    victron_ble_id: vshunt_ble_id
+    name: "Shunt Time To Go"
+    type: TIME_TO_GO
+
+  - platform: victron_ble
+    victron_ble_id: vshunt_ble_id
+    name: "Shunt Aux Voltage"
+    type: AUX_VOLTAGE
+    accuracy_decimals: 2

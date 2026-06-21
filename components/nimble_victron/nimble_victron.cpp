@@ -4,10 +4,10 @@
 #include "esphome/core/log.h"
 
 extern "C" {
-#include "esp_aes.h"
 #include "host/ble_gap.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
+#include "mbedtls/aes.h"
 }
 
 namespace esphome::nimble_victron {
@@ -53,7 +53,7 @@ void NimbleVictron::dump_config() {
 }
 
 void NimbleVictronScanner::register_device(NimbleVictron *device) {
-  this->devices_.push_back(device);
+  devices_.push_back(device);
 }
 
 void NimbleVictronScanner::on_host_synced(nimble_host::NimbleHost *host) {
@@ -102,7 +102,7 @@ int NimbleVictronScanner::gap_event(struct ble_gap_event *event, void *arg) {
   switch (event->type) {
     case BLE_GAP_EVENT_DISC: {
       struct ble_hs_adv_fields fields{};
-      if (ble_hs_adv_parse(event->disc.data, event->disc.length_data, &fields) != 0) {
+      if (ble_hs_adv_parse_fields(&fields, event->disc.data, event->disc.length_data) != 0) {
         return 0;
       }
       if (fields.mfg_data == nullptr || fields.mfg_data_len < 2) {
@@ -147,12 +147,12 @@ void NimbleVictronScanner::handle_advertisement_(const struct ble_gap_disc_desc 
 
 bool NimbleVictron::decrypt_payload_(const uint8_t *crypted, size_t crypted_len, uint8_t *out, uint8_t counter_lsb,
                                      uint8_t counter_msb) {
-  esp_aes_context ctx;
-  esp_aes_init(&ctx);
-  auto status = esp_aes_setkey(&ctx, this->bindkey_.data(), this->bindkey_.size() * 8);
+  mbedtls_aes_context ctx;
+  mbedtls_aes_init(&ctx);
+  int status = mbedtls_aes_setkey_enc(&ctx, this->bindkey_.data(), this->bindkey_.size() * 8);
   if (status != 0) {
-    ESP_LOGE(TAG, "esp_aes_setkey failed: %d", status);
-    esp_aes_free(&ctx);
+    ESP_LOGE(TAG, "mbedtls_aes_setkey_enc failed: %d", status);
+    mbedtls_aes_free(&ctx);
     return false;
   }
 
@@ -160,10 +160,10 @@ bool NimbleVictron::decrypt_payload_(const uint8_t *crypted, size_t crypted_len,
   uint8_t nonce_counter[16] = {counter_lsb, counter_msb, 0};
   uint8_t stream_block[16] = {0};
 
-  status = esp_aes_crypt_ctr(&ctx, crypted_len, &nc_offset, nonce_counter, stream_block, crypted, out);
-  esp_aes_free(&ctx);
+  status = mbedtls_aes_crypt_ctr(&ctx, crypted_len, &nc_offset, nonce_counter, stream_block, crypted, out);
+  mbedtls_aes_free(&ctx);
   if (status != 0) {
-    ESP_LOGE(TAG, "esp_aes_crypt_ctr failed: %d", status);
+    ESP_LOGE(TAG, "mbedtls_aes_crypt_ctr failed: %d", status);
     return false;
   }
   return true;
