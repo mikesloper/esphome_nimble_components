@@ -1,0 +1,57 @@
+# Example Victron SmartShunt — replace MAC and bindkey with your device values.
+# Bindkey from VicConnect app: Settings → Product info → VRM online portal → Encryption data.
+---
+nimble_host:
+  id: nimble_bt
+
+nimble_victron:
+  id: vshunt_nimble
+  nimble_host_id: nimble_bt
+  mac_address: F8:CF:3D:F9:2C:7F
+  bindkey: "1767024d6f11f81d9a7d021e278b24e9"
+  battery_voltage_sensor: shunt_battery_voltage
+  battery_current_sensor: shunt_battery_current
+  state_of_charge_sensor: shunt_soc
+  consumed_ah_sensor: shunt_consumed_ah
+  time_to_go_sensor: shunt_time_to_go
+  aux_voltage_sensor: shunt_aux_voltage
+
+sensor:
+  - platform: template
+    name: "Shunt Battery Voltage"
+    id: shunt_battery_voltage
+    unit_of_measurement: "V"
+    device_class: voltage
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "Shunt Battery Current"
+    id: shunt_battery_current
+    unit_of_measurement: "A"
+    device_class: current
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "Shunt SOC"
+    id: shunt_soc
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Shunt Consumed Ah"
+    id: shunt_consumed_ah
+    unit_of_measurement: "Ah"
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "Shunt Time To Go"
+    id: shunt_time_to_go
+    unit_of_measurement: "min"
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "Shunt Aux Voltage"
+    id: shunt_aux_voltage
+    unit_of_measurement: "V"
+    device_class: voltage
+    accuracy_decimals: 2

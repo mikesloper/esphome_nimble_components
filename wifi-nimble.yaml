@@ -1,0 +1,14 @@
+---
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  min_auth_mode: WPA2
+  use_psram: true
+  on_connect:
+    then:
+      - delay: 8s
+      - nimble_host.enable:
+          id: nimble_bt
+  ap:
+    password: "password"

@@ -1,0 +1,60 @@
+---
+# Minimal NimBLE Victron test build for Guition ESP32-P4 + C6.
+# Build: esphome compile victron-test.yaml
+# Flash: esphome run victron-test.yaml
+
+esphome:
+  name: victron-nimble
+  min_version: 2026.3.0
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+logger:
+  level: debug
+
+api:
+
+esp32:
+  framework:
+    type: esp-idf
+    advanced:
+      execute_from_psram: true
+      loop_task_stack_size: 16384
+
+packages:
+  wifi: !include wifi-nimble.yaml
+  hardware: !include guition-esp32-p4.yaml
+  victron: !include victron/smartshunt.yaml
+
+debug:
+  update_interval: 10s
+
+sensor:
+  - platform: debug
+    free:
+      name: "Free Internal Heap"
+      id: free_internal_heap
+    block:
+      name: "Largest Free Block (Internal)"
+      id: largest_free_block
+    min_free:
+      name: "Min Free Heap (Internal)"
+      id: min_free_heap
+    fragmentation:
+      name: "Heap Fragmentation"
+      id: heap_fragmentation
+    psram:
+      name: "Free PSRAM"
+      id: free_psram
+    loop_time:
+      name: "Loop Time"
+      id: loop_time
+
+  - platform: uptime
+    name: "Uptime Minutes"
+    id: uptime_minutes
+    filters:
+      - lambda: return x / 60;
