@@ -1,0 +1,100 @@
+---
+# NimBLE Renogy Rover / DCC50S — GATT client via nimble_renogy component.
+# Matches guition-dashboard4 renogy/rover-ble.yaml (FFF0/FFF1 notify, FFD0/FFD1 write).
+nimble_renogy:
+  id: renogy_rover
+  nimble_host_id: nimble_bt
+  mac_address: 6C:B2:FD:86:82:45
+  notify_service_uuid: "fff0"
+  notify_characteristic_uuid: "fff1"
+  write_service_uuid: "ffd0"
+  write_characteristic_uuid: "ffd1"
+  device_model: "DCCX0S"
+  auto_connect: true
+  update_interval: 10s
+  charging_status_text_sensor: charging_status
+  battery_voltage_sensor: battery_voltage
+  battery_current_sensor: battery_current
+  battery_temperature_sensor: battery_temperature
+  pv_voltage_sensor: pv_voltage
+  pv_current_sensor: pv_current
+  pv_power_sensor: pv_power
+  load_voltage_sensor: load_voltage
+  load_current_sensor: load_current
+  total_current_sensor: total_current
+
+text_sensor:
+  - platform: template
+    name: "Mono PV Status"
+    id: charging_status
+
+sensor:
+  - platform: template
+    name: "Mono PV Charge Voltage"
+    id: battery_voltage
+    device_class: voltage
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Mono PV Charge Current"
+    id: battery_current
+    device_class: current
+    unit_of_measurement: "A"
+    accuracy_decimals: 2
+
+  - platform: template
+    id: total_current
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "Mono PV Charge Power"
+    id: pv_power
+    device_class: power
+    unit_of_measurement: "W"
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "Mono PV Load Voltage"
+    id: load_voltage
+    device_class: voltage
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Mono PV Load Current"
+    id: load_current
+    device_class: current
+    unit_of_measurement: "A"
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "Mono PV Aux Temperature"
+    id: battery_temperature
+    device_class: temperature
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Mono PV Panel Voltage"
+    id: pv_voltage
+    device_class: voltage
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Mono PV Panel Current"
+    id: pv_current
+    device_class: current
+    unit_of_measurement: "A"
+    accuracy_decimals: 2
+
+  - platform: integration
+    sensor: battery_current
+    name: "Mono PV Amp Hours"
+    state_class: total_increasing
+    device_class: energy
+    unit_of_measurement: Ah
+    accuracy_decimals: 2
+    time_unit: h
+    restore: true

@@ -32,6 +32,7 @@ A working ELM327 NimBLE reference (GATT client pattern) lives on the esphome for
 | `components/nimble_elm327/` | ELM327 OBD-II GATT client (notify + write) |
 | `components/nimble_sunster/` | Sunster diesel heater GATT client |
 | `components/nimble_jbd_bms/` | JBD BMS GATT client (port of syssi/esphome-jbd-bms) |
+| `components/nimble_renogy/` | Renogy Rover/DCC50S GATT client (Modbus over BLE) |
 
 **Do not add** `esp32_ble`, `esp32_ble_tracker`, or `ble_client` to this project — they pull in Bluedroid and defeat the purpose.
 
