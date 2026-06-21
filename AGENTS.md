@@ -68,7 +68,7 @@ When adding record types, copy struct layouts from [esphome-victron_ble `victron
 
 1. **This repo** — Victron on NimBLE (current).
 2. **guition-dashboard4** — merge `nimble_host` + `nimble_victron`; drop Victron external component + tracker for those devices.
-3. **GATT devices** — new `nimble_sunster`, `nimble_jdb`, `nimble_renogy` modeled on `nimble_elm327` (one component each, minimal API).
+3. **GATT devices** — `nimble_sunster`, `nimble_jbd_bms`, `nimble_elm327` (one component each); `nimble_renogy` still TODO.
 4. **Remove Bluedroid** from base yaml only when all active BLE devices are migrated.
 5. **Disabler** — optional during transition; prefer compile-time packages (include only devices in use) for real RAM wins.
 

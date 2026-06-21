@@ -1,0 +1,76 @@
+---
+# NimBLE JBD BMS GATT client — port of syssi/esphome-jbd-bms for hosted C6.
+nimble_jbd_bms:
+  id: jdb_bms
+  nimble_host_id: nimble_bt
+  mac_address: A5:C2:37:35:4A:6C
+  service_uuid: "ff00"
+  notify_characteristic_uuid: "ff01"
+  control_characteristic_uuid: "ff02"
+  auto_connect: true
+  update_interval: 8s
+
+sensor:
+  - platform: integration
+    sensor: jdb_current
+    name: "Mono BMS Amp Hours"
+    state_class: total
+    device_class: energy
+    unit_of_measurement: Ah
+    accuracy_decimals: 2
+    time_unit: h
+    restore: true
+
+  - platform: nimble_jbd_bms
+    nimble_jbd_bms_id: jdb_bms
+    current:
+      name: "Mono BMS Current"
+      id: jdb_current
+    power:
+      name: "Mono BMS Power"
+    state_of_charge:
+      name: "Mono BMS State of Charge"
+    total_voltage:
+      name: "Mono BMS Battery Voltage"
+    delta_cell_voltage:
+      name: "Mono BMS Delta Cell Voltage"
+    min_cell_voltage:
+      name: "Mono BMS Min Cell Voltage"
+    max_cell_voltage:
+      name: "Mono BMS Max Cell Voltage"
+    temperature_1:
+      name: "Mono BMS Temperature A"
+    temperature_2:
+      name: "Mono BMS Temperature B"
+    cell_voltage_1:
+      name: "Mono BMS Cell 1 Voltage"
+    cell_voltage_2:
+      name: "Mono BMS Cell 2 Voltage"
+    cell_voltage_3:
+      name: "Mono BMS Cell 3 Voltage"
+    cell_voltage_4:
+      name: "Mono BMS Cell 4 Voltage"
+    cell_voltage_5:
+      name: "Mono BMS Cell 5 Voltage"
+    cell_voltage_6:
+      name: "Mono BMS Cell 6 Voltage"
+    cell_voltage_7:
+      name: "Mono BMS Cell 7 Voltage"
+    cell_voltage_8:
+      name: "Mono BMS Cell 8 Voltage"
+
+text_sensor:
+  - platform: nimble_jbd_bms
+    nimble_jbd_bms_id: jdb_bms
+    errors:
+      name: "Mono BMS Error"
+    operation_status:
+      name: "Mono BMS Status"
+
+switch:
+  - platform: nimble_jbd_bms
+    nimble_jbd_bms_id: jdb_bms
+    charging:
+      name: "Mono BMS Charging Switch"
+    discharging:
+      name: "Mono BMS Discharging Switch"

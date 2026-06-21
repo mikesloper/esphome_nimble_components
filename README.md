@@ -29,6 +29,9 @@ A working ELM327 NimBLE reference (GATT client pattern) lives on the esphome for
 |-----------|------|
 | `components/nimble_host/` | Enables hosted NimBLE via sdkconfig; deferred start after WiFi |
 | `components/nimble_victron/` | Passive scan → bindkey decrypt → publish template sensors |
+| `components/nimble_elm327/` | ELM327 OBD-II GATT client (notify + write) |
+| `components/nimble_sunster/` | Sunster diesel heater GATT client |
+| `components/nimble_jbd_bms/` | JBD BMS GATT client (port of syssi/esphome-jbd-bms) |
 
 **Do not add** `esp32_ble`, `esp32_ble_tracker`, or `ble_client` to this project — they pull in Bluedroid and defeat the purpose.
 
