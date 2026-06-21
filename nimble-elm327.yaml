@@ -1,16 +1,20 @@
 ---
-# Minimal NimBLE Victron test build for Guition ESP32-P4 + C6.
-# Build: esphome compile victron-test.yaml
-# Flash: esphome run victron-test.yaml
+# NimBLE ELM327 / OBD-II test (GATT client on hosted C6).
+# Build: esphome compile victron-test-elm327.yaml
+#
+# Do not combine with Victron passive scan in one firmware without coordination —
+# both use the NimBLE GAP scanner. Use separate test images or a disabler (see dashboard).
 
 esphome:
-  name: victron-nimble
+  name: victron-elm327
   min_version: 2026.3.0
-  platformio_options:
-    # build_flags:
-    #   - -D MBEDTLS_CONFIG_FILE='<mbedtls/esp_config.h>'
-
-
+  on_boot:
+    - priority: 700
+      then:
+        - lambda: |-
+            id(odbii_rpm).publish_state(0);
+            id(odbii_coolant_temp).publish_state(0);
+            id(odbii_kph).publish_state(0);
 
 external_components:
   - source:
@@ -29,10 +33,13 @@ esp32:
       execute_from_psram: true
       loop_task_stack_size: 16384
 
+nimble_host:
+  id: nimble_bt
+
 packages:
   wifi: !include wifi-nimble.yaml
-  hardware: !include guition-esp32-p4.yaml
-  victron: !include victron/smartshunt.yaml
+  hardware: !include guition-esp32-p4-nimble.yaml
+  elm327: !include elm327/elm327-nimble.yaml
 
 debug:
   update_interval: 10s
@@ -41,22 +48,12 @@ sensor:
   - platform: debug
     free:
       name: "Free Internal Heap"
-      id: free_internal_heap
     block:
       name: "Largest Free Block (Internal)"
-      id: largest_free_block
     min_free:
       name: "Min Free Heap (Internal)"
-      id: min_free_heap
-    fragmentation:
-      name: "Heap Fragmentation"
-      id: heap_fragmentation
     psram:
       name: "Free PSRAM"
-      id: free_psram
-    loop_time:
-      name: "Loop Time"
-      id: loop_time
 
   - platform: uptime
     name: "Uptime Minutes"

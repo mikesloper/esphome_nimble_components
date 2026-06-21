@@ -1,0 +1,246 @@
+---
+# NimBLE Sunster diesel heater — GATT client via nimble_sunster component.
+nimble_sunster:
+  id: heater_nimble
+  nimble_host_id: nimble_bt
+  mac_address: 70:19:88:3B:B8:63
+  service_uuid: "ffe0"
+  characteristic_uuid: "ffe1"
+  auto_connect: true
+  running_binary_sensor: stato_Bruciatore
+  glow_plug_text_sensor: stato_Candeletta
+  mode_text_sensor: Mode_Burner
+  error_code_sensor: Error_Code
+  battery_voltage_sensor: heat_battery_voltage
+  altitude_sensor: altitude
+  running_status_code_sensor: running_status_code
+  room_temperature_sensor: room_temperature
+  heating_temperature_sensor: heating_temperature
+  heater_level_number: heater_level
+  heater_temperature_number: heater_temperature
+
+# text:
+#   - platform: template
+#     name: "Mono DHeater Mac Address"
+#     id: dheater_mac
+#     setup_priority: -100
+#     optimistic: true
+#     min_length: 0
+#     max_length: 32
+#     mode: text
+#     restore_value: true
+#     on_value:
+#       then:
+#         - lambda: | 
+#             esphome::ble_client::BLEClient *blec = id(heater_ble);
+
+#             std::string mac_str = id(dheater_mac)->state.c_str();
+
+#             std::remove(mac_str.begin(), mac_str.end(), ' ');
+
+#             const char *mac_char = mac_str.c_str();
+
+#             if(isValidMacAddress(mac_char)){
+#               uint64_t mac = string_to_mac(mac_str);
+#               blec->set_address(mac);
+#               blec->disconnect();
+#               blec->connect();
+#             }
+
+
+
+interval:
+  - interval: 15s
+    id: intervallo
+    then:
+      - nimble_sunster.write:
+          id: heater_nimble
+          value: [0xaa, 0x55, 0x0c, 0x22, 0x01, 0x00, 0x00, 0x2f]
+
+
+# Global variables
+globals:
+  - id: current_mode
+    type: int
+    initial_value: '1'  # 1 for LEVEL, 2 for AUTOMATIC
+
+text_sensor:
+  - platform: template
+    name: "Mono Air Heater Glow Plug Status"
+    id: stato_Candeletta
+    icon: "mdi:induction"
+  - platform: template
+    name: "Mono Air Heater Heater Mode"
+    id: Mode_Burner
+
+binary_sensor:
+  - platform: template
+    name: "Mono Air Heater Heater Status"
+    id: stato_Bruciatore
+
+# Sensors for status reporting
+sensor:
+
+  - platform: template
+    name: "Mono Air Heater Error Code"
+    id: Error_Code
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "Mono Air Heater Battery Voltage"
+    id: heat_battery_voltage
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    device_class: voltage
+    icon: "mdi:car-battery"
+
+  - platform: template
+    name: "Mono Air Heater Altitude"
+    unit_of_measurement: 'm'
+    id: altitude
+    device_class: distance
+    accuracy_decimals: 0
+    icon: "mdi:summit"
+
+  - platform: template
+    name: "Mono Air Heater Power Status"
+    id: stato_Potenza
+    accuracy_decimals: 0
+    icon: "mdi:speedometer"
+
+  - platform: template
+    name: "Mono Air Heater Running Code"
+    id: running_status_code
+    accuracy_decimals: 0
+    icon: "mdi:speedometer"
+
+
+
+  - platform: template
+    name: "Mono Air Heater Controlller Temperature"
+    id: room_temperature
+    unit_of_measurement: "°C"
+    accuracy_decimals: 0
+    icon: "mdi:home-thermometer"
+
+  - platform: template
+    name: "Mono Air Heater Device Temperature"
+    id: heating_temperature
+    unit_of_measurement: "°C"
+    accuracy_decimals: 0
+    icon: "mdi:radiator"
+
+
+# Switches
+switch:
+  - platform: template
+    name: "Mono Air Heater Heater Power"
+    id: heater_power
+    icon: "mdi:radiator"
+    optimistic: true
+    turn_on_action:
+      - nimble_sunster.write:
+          id: heater_nimble
+          value: [0xAA, 0x55, 0x0C, 0x22, 0x03, 0x01, 0x00, 0x32] #ON
+
+    turn_off_action:
+      - nimble_sunster.write:
+          id: heater_nimble
+          value: [0xAA, 0x55, 0x0C, 0x22, 0x03, 0x00, 0x00, 0x31] #OFF                          
+      - lambda: |-
+          //id(fan_speed).publish_state(0);
+    
+    lambda: |-
+      return id(stato_Bruciatore).state;
+
+# Select for mode
+select:
+  - platform: template
+    name: "Mono Air Heater Heater Mode"
+    id: heater_mode
+    options:
+      - "Level"
+      - "Automatic"
+    initial_option: "Level"
+    optimistic: true
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(heater_mode).current_option() == "Level";'
+            then:
+              - lambda: 'id(current_mode) = 1;'
+              - nimble_sunster.write:
+                  id: heater_nimble
+                  value: [0xAA, 0x55, 0x0C, 0x22, 0x02, 0x01, 0x00, 0x31]
+            else:
+              - lambda: 'id(current_mode) = 2;'
+              - nimble_sunster.write:
+                  id: heater_nimble
+                  value: [0xAA, 0x55, 0x0C, 0x22, 0x02, 0x02, 0x00, 0x32]
+
+number:
+  - platform: template
+    name: "Mono Air Heater Heater Temperature"
+    id: heater_temperature
+    min_value: 8
+    max_value: 36
+    step: 1
+    unit_of_measurement: "°C"
+    icon: "mdi:thermometer"
+    optimistic: true
+    set_action:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(heater_mode).current_option() == "Automatic";'
+            then:
+              # Set Automatic mode
+              #- nimble_sunster.write:
+              #    id: heater_nimble
+              #    service_uuid: '0000FFE0-0000-1000-8000-00805F9B34FB'
+              #    characteristic_uuid: '0000FFE1-0000-1000-8000-00805F9B34FB'
+              #    value: [0xAA, 0x55, 0x0C, 0x22, 0x02, 0x02, 0x00, 0x32]
+              - delay: 1s
+              - lambda: |-
+                  uint8_t temp = (uint8_t) id(heater_temperature).state;
+                  auto bytes = esphome::diesel_heater_ble::Request(0x04, temp, 0x00).toBytes();
+                  id(heater_nimble)->write(bytes.data(), bytes.size());
+            else:
+              - delay: 2s
+              - nimble_sunster.write: #send update request to change temp back (hacky)
+                  id: heater_nimble
+                  value: [0xaa, 0x55, 0x0c, 0x22, 0x01, 0x00, 0x00, 0x2f]
+
+  - platform: template
+    name: "Mono Air Heater Heater LEVEL"
+    id: heater_level
+    min_value: 0
+    max_value: 10
+    step: 1
+    unit_of_measurement: "Level"
+    icon: "mdi:format-list-numbered"
+    optimistic: true
+    set_action:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(heater_mode).current_option() == "Level";'
+            then:
+              # Set Level mode
+              #- nimble_sunster.write:
+              #    id: heater_nimble
+              #    service_uuid: '0000FFE0-0000-1000-8000-00805F9B34FB'
+              #    characteristic_uuid: '0000FFE1-0000-1000-8000-00805F9B34FB'
+              #    value: [0xAA, 0x55, 0x0C, 0x22, 0x02, 0x01, 0x00, 0x31]
+              - delay: 1s
+              - lambda: |-
+                  uint8_t level = (uint8_t) id(heater_level).state;
+                  auto bytes = esphome::diesel_heater_ble::Request(0x04, level, 0x00).toBytes();
+                  ESP_LOGI("BLE", "LEVEL: %d", level);
+                  id(heater_nimble)->write(bytes.data(), bytes.size());
+            else:
+              - delay: 2s
+              - nimble_sunster.write: #send update request to change temp back (hacky)
+                  id: heater_nimble
+                  value: [0xaa, 0x55, 0x0c, 0x22, 0x01, 0x00, 0x00, 0x2f]

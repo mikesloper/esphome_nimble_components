@@ -1,0 +1,37 @@
+---
+# Bluedroid ELM327 / OBD-II test (esp32_ble ble_client on hosted C6).
+# Build: esphome compile bluedroid-elm327.yaml
+
+esphome:
+  name: victron-elm327-bd
+  min_version: 2026.3.0
+
+logger:
+  level: debug
+
+api:
+
+packages:
+  wifi: !include wifi-bluedroid.yaml
+  hardware: !include guition-esp32-p4-bluedroid.yaml
+  elm327: !include elm327/elm327-bluedroid.yaml
+
+debug:
+  update_interval: 10s
+
+sensor:
+  - platform: debug
+    free:
+      name: "Free Internal Heap"
+    block:
+      name: "Largest Free Block (Internal)"
+    min_free:
+      name: "Min Free Heap (Internal)"
+    psram:
+      name: "Free PSRAM"
+
+  - platform: uptime
+    name: "Uptime Minutes"
+    id: uptime_minutes
+    filters:
+      - lambda: return x / 60;

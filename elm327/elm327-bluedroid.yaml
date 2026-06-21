@@ -1,0 +1,139 @@
+---
+# Bluedroid ELM327 (OBD-II) via esp32_ble ble_client.
+# Standalone test package — no disabler. See elm327.yaml for dashboard use.
+esphome:
+  on_boot:
+    - priority: 700
+      then:
+        - lambda: |-
+            id(odbii_rpm).publish_state(0);
+            id(odbii_coolant_temp).publish_state(0);
+            id(odbii_kph).publish_state(0);
+
+  includes:
+    - lib/elm327.h
+  includes_c:
+    - lib/elm327.cpp
+
+ble_client:
+  - mac_address: 8F:C3:D2:5A:00:91
+    id: lelink
+    name: LELink Leafspy
+    auto_connect: true
+    on_connect:
+      then:
+        - lambda: |-
+            ESP_LOGI("ble_client on_connect", "Connected to lelink");
+            init_elm327_pid_status();
+    on_disconnect:
+      then:
+        - lambda: |-
+            ESP_LOGI("ble_client_lambda", "Disconnected from lelink");
+    on_passkey_request:
+      then:
+        - ble_client.passkey_reply:
+            id: lelink
+            passkey: 1234
+        - lambda: |-
+            ESP_LOGI("ble_client_lambda", "passkey request from lelink");
+
+sensor:
+  - platform: ble_client
+    ble_client_id: lelink
+    internal: true
+    update_interval: never
+    notify: true
+    type: characteristic
+    name: "lelink response"
+    id: lelink_response_text
+    service_uuid: "0000fff0-0000-1000-8000-00805f9b34fb"
+    characteristic_uuid: "FFF1"
+    lambda: |-
+      handle_eml_reponse(x);
+      return 0.0;
+
+  - platform: template
+    name: "Mono ODBII RPM"
+    id: odbii_rpm
+
+  - platform: template
+    name: "Mono ODBII KPH"
+    id: odbii_kph
+
+  - platform: template
+    name: "Mono ODBII Coolant Temperature"
+    id: odbii_coolant_temp
+    device_class: temperature
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Mono ODBII Device Voltage"
+    id: odbii_device_voltage
+    device_class: voltage
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+
+interval:
+  - interval: 60s
+    then:
+      - lambda: |-
+          extern std::map<int, int> elm327_pid_status;
+          int uptime = static_cast<int>(id(uptime_minutes).get_raw_state());
+          for (const auto &i : elm327_pid_status) {
+            if (uptime - i.second > 60 && i.second > 60) {
+              switch (i.first) {
+                case 12:
+                  id(odbii_rpm).publish_state(0);
+                  break;
+                case 13:
+                  id(odbii_coolant_temp).publish_state(0);
+                  break;
+                case 5:
+                  id(odbii_kph).publish_state(0);
+                  break;
+              }
+            }
+          }
+      - ble_client.ble_write:
+          id: lelink
+          service_uuid: 0000fff0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: FFF2
+          value: [0x41, 0x54, 0x5A, 0x0D, 0x0A]
+      - ble_client.ble_write:
+          id: lelink
+          service_uuid: 0000fff0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: FFF2
+          value: [0x41, 0x54, 0x45, 0x31, 0x0D, 0x0A]
+
+  - interval: 10s
+    then:
+      - ble_client.ble_write:
+          id: lelink
+          service_uuid: 0000fff0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: FFF2
+          value: [0x30, 0x31, 0x30, 0x43, 0x0D, 0x0A]
+
+  - interval: 11s
+    then:
+      - ble_client.ble_write:
+          id: lelink
+          service_uuid: 0000fff0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: FFF2
+          value: [0x30, 0x31, 0x30, 0x44, 0x0D, 0x0A]
+
+  - interval: 20s
+    then:
+      - ble_client.ble_write:
+          id: lelink
+          service_uuid: 0000fff0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: FFF2
+          value: [0x30, 0x31, 0x30, 0x35, 0x0D, 0x0A]
+
+  - interval: 14s
+    then:
+      - ble_client.ble_write:
+          id: lelink
+          service_uuid: 0000fff0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: FFF2
+          value: [0x41, 0x54, 0x52, 0x56, 0x0D, 0x0A]

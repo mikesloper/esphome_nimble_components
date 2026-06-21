@@ -1,0 +1,60 @@
+---
+# NimBLE Sunster diesel heater test (GATT client on hosted C6).
+# Build: esphome compile nimble-sunster.yaml
+#
+# Do not combine with Victron passive scan or ELM327 GATT in one firmware without
+# coordination — they share the NimBLE GAP scanner.
+
+esphome:
+  name: victron-sunster
+  min_version: 2026.3.0
+  includes:
+    - lib/air_heater_ble.h
+    - lib/air_heater_state.h
+  includes_c:
+    - lib/air_heater_ble.cpp
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+logger:
+  level: debug
+
+api:
+
+esp32:
+  framework:
+    type: esp-idf
+    advanced:
+      execute_from_psram: true
+      loop_task_stack_size: 16384
+
+nimble_host:
+  id: nimble_bt
+
+packages:
+  wifi: !include wifi-nimble.yaml
+  hardware: !include guition-esp32-p4-nimble.yaml
+  sunster: !include sunster/sunster-nimble.yaml
+
+debug:
+  update_interval: 10s
+
+sensor:
+  - platform: debug
+    free:
+      name: "Free Internal Heap"
+    block:
+      name: "Largest Free Block (Internal)"
+    min_free:
+      name: "Min Free Heap (Internal)"
+    psram:
+      name: "Free PSRAM"
+
+  - platform: uptime
+    name: "Uptime Minutes"
+    id: uptime_minutes
+    filters:
+      - lambda: return x / 60;
