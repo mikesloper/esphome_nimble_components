@@ -17,7 +17,7 @@ CONF_PV_POWER_SENSOR_ID = "pv_power_sensor"
 CONF_SOLAR_BATTERY_VOLTAGE_SENSOR_ID = "solar_battery_voltage_sensor"
 CONF_SOLAR_BATTERY_CURRENT_SENSOR_ID = "solar_battery_current_sensor"
 
-DEPENDENCIES = ["nimble_host", "sensor"]
+DEPENDENCIES = ["nimble_host", "nimble_gap", "sensor"]
 MULTI_CONF = True
 
 nimble_host_ns = cg.esphome_ns.namespace("nimble_host")

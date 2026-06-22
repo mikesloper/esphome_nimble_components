@@ -10,7 +10,7 @@ CONF_CONTROL_CHARACTERISTIC_UUID = "control_characteristic_uuid"
 CONF_AUTH_TIMEOUT = "auth_timeout"
 CONF_AUTO_CONNECT = "auto_connect"
 
-DEPENDENCIES = ["nimble_host"]
+DEPENDENCIES = ["nimble_host", "nimble_gap"]
 AUTO_LOAD = ["sensor", "text_sensor", "switch"]
 MULTI_CONF = True
 

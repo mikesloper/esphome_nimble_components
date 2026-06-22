@@ -1,4 +1,8 @@
 ---
+nimble_gap:
+  id: ble_gap
+  nimble_host_id: nimble_bt
+
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password

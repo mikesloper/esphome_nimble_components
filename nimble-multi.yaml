@@ -1,12 +1,9 @@
 ---
-# NimBLE Renogy Rover / DCC50S test (GATT client on hosted C6).
-# Build: esphome compile nimble-renogy.yaml
-#
-# Multiple GATT clients and Victron passive scan are coordinated via nimble_gap
-# (see nimble-multi.yaml for Renogy + Victron together).
+# Renogy + Victron only (subset of nimble-all.yaml).
+# See nimble-all.yaml for all four devices together.
 
 esphome:
-  name: victron-renogy
+  name: victron-multi
   min_version: 2026.3.0
 
 external_components:
@@ -33,6 +30,7 @@ packages:
   wifi: !include wifi-nimble.yaml
   hardware: !include guition-esp32-p4-nimble.yaml
   renogy: !include renogy/rover-nimble.yaml
+  victron: !include victron/smartshunt.yaml
 
 debug:
   update_interval: 10s

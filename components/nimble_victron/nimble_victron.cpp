@@ -1,5 +1,6 @@
 #include "nimble_victron.h"
 #include "victron_values.h"
+#include "esphome/components/nimble_gap/nimble_gap.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 
@@ -12,24 +13,23 @@ extern "C" {
 
 namespace esphome::nimble_victron {
 
+using esphome::nimble_gap::global_nimble_gap;
+
 static const char *const TAG = "nimble_victron";
 
 std::vector<NimbleVictron *> NimbleVictronScanner::devices_;
-bool NimbleVictronScanner::scanning_{false};
-uint8_t NimbleVictronScanner::own_addr_type_{0};
-nimble_host::NimbleHost *NimbleVictronScanner::host_{nullptr};
-
-static bool peer_mac_matches_(uint64_t address, const uint8_t *addr_val) {
-  for (int i = 0; i < 6; i++) {
-    uint8_t expected = (address >> (i * 8)) & 0xFF;
-    if (addr_val[i] != expected) {
-      return false;
-    }
-  }
-  return true;
-}
+bool NimbleVictron::adv_listener_registered_{false};
 
 float NimbleVictron::get_setup_priority() const { return setup_priority::BUS + 1.0f; }
+
+void NimbleVictron::ensure_gap_registered_() {
+  if (!this->device_registered_) {
+    NimbleVictronScanner::register_device(this);
+    this->device_registered_ = true;
+  }
+  esphome::nimble_gap::register_adv_listener_once(&NimbleVictronScanner::on_adv, nullptr,
+                                                  NimbleVictron::adv_listener_registered_);
+}
 
 void NimbleVictron::setup() {
   if (this->host_ == nullptr) {
@@ -37,9 +37,11 @@ void NimbleVictron::setup() {
     this->mark_failed();
     return;
   }
-  NimbleVictronScanner::register_device(this);
-  this->host_->add_on_sync_callback([this]() { NimbleVictronScanner::on_host_synced(this->host_); });
+
+  this->ensure_gap_registered_();
 }
+
+void NimbleVictron::loop() { this->ensure_gap_registered_(); }
 
 void NimbleVictron::dump_config() {
   uint8_t mac[6];
@@ -56,87 +58,29 @@ void NimbleVictronScanner::register_device(NimbleVictron *device) {
   devices_.push_back(device);
 }
 
-void NimbleVictronScanner::on_host_synced(nimble_host::NimbleHost *host) {
-  host_ = host;
-  ensure_scanning_(host);
-}
-
-void NimbleVictronScanner::loop(nimble_host::NimbleHost *host) {
-  if (host == nullptr || !host->is_active() || !host->is_synced()) {
+void NimbleVictronScanner::on_adv(const struct ble_gap_disc_desc &disc, void *context) {
+  struct ble_hs_adv_fields fields{};
+  if (ble_hs_adv_parse_fields(&fields, disc.data, disc.length_data) != 0) {
     return;
   }
-  if (!scanning_ && !devices_.empty()) {
-    ensure_scanning_(host);
-  }
-}
-
-void NimbleVictronScanner::ensure_scanning_(nimble_host::NimbleHost *host) {
-  if (scanning_ || devices_.empty()) {
+  if (fields.mfg_data == nullptr || fields.mfg_data_len < 2) {
     return;
   }
 
-  int rc = ble_hs_id_infer_auto(0, &own_addr_type_);
-  if (rc != 0) {
-    ESP_LOGE(TAG, "ble_hs_id_infer_auto failed: %d", rc);
+  uint16_t company_id = fields.mfg_data[0] | (static_cast<uint16_t>(fields.mfg_data[1]) << 8);
+  if (company_id != VICTRON_MANUFACTURER_ID) {
     return;
   }
 
-  struct ble_gap_disc_params disc_params{};
-  disc_params.filter_duplicates = 0;
-  disc_params.passive = 1;
-  disc_params.itvl = 0;
-  disc_params.window = 0;
-
-  scanning_ = true;
-  host_ = host;
-  rc = ble_gap_disc(own_addr_type_, BLE_HS_FOREVER, &disc_params, gap_event, nullptr);
-  if (rc != 0) {
-    ESP_LOGE(TAG, "ble_gap_disc failed: %d", rc);
-    scanning_ = false;
-  } else {
-    ESP_LOGI(TAG, "Victron BLE scan started (%u device(s))", (unsigned) devices_.size());
-  }
-}
-
-int NimbleVictronScanner::gap_event(struct ble_gap_event *event, void *arg) {
-  switch (event->type) {
-    case BLE_GAP_EVENT_DISC: {
-      struct ble_hs_adv_fields fields{};
-      if (ble_hs_adv_parse_fields(&fields, event->disc.data, event->disc.length_data) != 0) {
-        return 0;
-      }
-      if (fields.mfg_data == nullptr || fields.mfg_data_len < 2) {
-        return 0;
-      }
-
-      uint16_t company_id = fields.mfg_data[0] | (static_cast<uint16_t>(fields.mfg_data[1]) << 8);
-      if (company_id != VICTRON_MANUFACTURER_ID) {
-        return 0;
-      }
-
-      const uint8_t *payload = fields.mfg_data + 2;
-      size_t payload_len = fields.mfg_data_len - 2;
-      handle_advertisement_(event->disc, payload, payload_len);
-      return 0;
-    }
-
-    case BLE_GAP_EVENT_DISC_COMPLETE:
-      scanning_ = false;
-      if (host_ != nullptr && event->disc_complete.reason != BLE_HS_EPREEMPTED) {
-        ESP_LOGD(TAG, "Scan ended (reason=%d), restarting", event->disc_complete.reason);
-        ensure_scanning_(host_);
-      }
-      return 0;
-
-    default:
-      return 0;
-  }
+  const uint8_t *payload = fields.mfg_data + 2;
+  size_t payload_len = fields.mfg_data_len - 2;
+  handle_advertisement_(disc, payload, payload_len);
 }
 
 void NimbleVictronScanner::handle_advertisement_(const struct ble_gap_disc_desc &disc, const uint8_t *payload,
                                                  size_t payload_len) {
   for (auto *device : devices_) {
-    if (!peer_mac_matches_(device->get_address(), disc.addr.val)) {
+    if (!nimble_gap::NimbleGapCoordinator::peer_mac_matches(device->get_address(), disc.addr.val)) {
       continue;
     }
     if (device->parse_advertisement(payload, payload_len)) {

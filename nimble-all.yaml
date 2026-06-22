@@ -1,13 +1,22 @@
 ---
-# NimBLE Renogy Rover / DCC50S test (GATT client on hosted C6).
-# Build: esphome compile nimble-renogy.yaml
+# All four NimBLE devices on one firmware (Guition ESP32-P4 + C6):
+#   - Victron SmartShunt (passive BLE adv)
+#   - Renogy Rover / DCC50S (GATT)
+#   - JBD BMS (GATT)
+#   - Sunster diesel heater (GATT)
 #
-# Multiple GATT clients and Victron passive scan are coordinated via nimble_gap
-# (see nimble-multi.yaml for Renogy + Victron together).
+# Scan/connect is coordinated by nimble_gap (wifi-nimble.yaml).
+# Build: esphome compile nimble-all.yaml
+# Flash: esphome run nimble-all.yaml
 
 esphome:
-  name: victron-renogy
+  name: victron-all
   min_version: 2026.3.0
+  includes:
+    - lib/air_heater_ble.h
+    - lib/air_heater_state.h
+  includes_c:
+    - lib/air_heater_ble.cpp
 
 external_components:
   - source:
@@ -24,7 +33,7 @@ esp32:
     type: esp-idf
     advanced:
       execute_from_psram: true
-      loop_task_stack_size: 16384
+      loop_task_stack_size: 20480
 
 nimble_host:
   id: nimble_bt
@@ -32,7 +41,10 @@ nimble_host:
 packages:
   wifi: !include wifi-nimble.yaml
   hardware: !include guition-esp32-p4-nimble.yaml
+  victron: !include victron/smartshunt.yaml
   renogy: !include renogy/rover-nimble.yaml
+  jdb: !include jdb/bms-nimble.yaml
+  sunster: !include sunster/sunster-nimble.yaml
 
 debug:
   update_interval: 10s
@@ -47,6 +59,8 @@ sensor:
       name: "Min Free Heap (Internal)"
     psram:
       name: "Free PSRAM"
+    loop_time:
+      name: "Loop Time"
 
   - platform: uptime
     name: "Uptime Minutes"

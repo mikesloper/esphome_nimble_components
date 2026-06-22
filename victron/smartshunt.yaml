@@ -1,9 +1,7 @@
 # Example Victron SmartShunt — replace MAC and bindkey with your device values.
 # Bindkey from VicConnect app: Settings → Product info → VRM online portal → Encryption data.
+# nimble_host is defined in the top-level entry YAML (nimble-victron.yaml, nimble-multi.yaml, etc.).
 ---
-nimble_host:
-  id: nimble_bt
-
 nimble_victron:
   id: vshunt_nimble
   nimble_host_id: nimble_bt

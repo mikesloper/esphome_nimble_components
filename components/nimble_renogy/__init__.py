@@ -25,7 +25,7 @@ CONF_LOAD_VOLTAGE_SENSOR_ID = "load_voltage_sensor"
 CONF_LOAD_CURRENT_SENSOR_ID = "load_current_sensor"
 CONF_TOTAL_CURRENT_SENSOR_ID = "total_current_sensor"
 
-DEPENDENCIES = ["nimble_host", "sensor", "text_sensor"]
+DEPENDENCIES = ["nimble_host", "nimble_gap", "sensor", "text_sensor"]
 
 lib_path = str(pathlib.Path(CORE.config_dir) / "lib")
 cg.add_build_flag(f'-I"{lib_path}"')

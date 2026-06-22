@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <vector>
 
-struct ble_gap_event;
 struct ble_gap_disc_desc;
 
 namespace esphome::nimble_victron {
@@ -19,23 +18,18 @@ class NimbleVictron;
 class NimbleVictronScanner {
  public:
   static void register_device(NimbleVictron *device);
-  static void on_host_synced(nimble_host::NimbleHost *host);
-  static void loop(nimble_host::NimbleHost *host);
-  static int gap_event(struct ble_gap_event *event, void *arg);
+  static void on_adv(const struct ble_gap_disc_desc &disc, void *context);
 
  private:
-  static void ensure_scanning_(nimble_host::NimbleHost *host);
   static void handle_advertisement_(const struct ble_gap_disc_desc &disc, const uint8_t *payload, size_t payload_len);
 
   static std::vector<NimbleVictron *> devices_;
-  static bool scanning_;
-  static uint8_t own_addr_type_;
-  static nimble_host::NimbleHost *host_;
 };
 
 class NimbleVictron : public Component {
  public:
   void setup() override;
+  void loop() override;
   void dump_config() override;
   float get_setup_priority() const override;
 
@@ -62,6 +56,7 @@ class NimbleVictron : public Component {
                         uint8_t counter_msb);
   void publish_battery_monitor_(const VICTRON_BLE_RECORD_BATTERY_MONITOR *rec);
   void publish_solar_charger_(const VICTRON_BLE_RECORD_SOLAR_CHARGER *rec);
+  void ensure_gap_registered_();
 
   nimble_host::NimbleHost *host_{nullptr};
   uint64_t address_{0};
@@ -77,6 +72,8 @@ class NimbleVictron : public Component {
   sensor::Sensor *pv_power_sensor_{nullptr};
   sensor::Sensor *solar_battery_voltage_sensor_{nullptr};
   sensor::Sensor *solar_battery_current_sensor_{nullptr};
+  bool device_registered_{false};
+  static bool adv_listener_registered_;
 };
 
 }  // namespace esphome::nimble_victron

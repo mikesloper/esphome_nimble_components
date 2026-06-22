@@ -4,6 +4,7 @@
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/text_sensor/text_sensor.h"
+#include "esphome/components/nimble_gap/nimble_gap.h"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -11,6 +12,8 @@
 namespace esphome::nimble_host {
 class NimbleHost;
 }
+
+struct ble_gap_event;
 
 namespace esphome::nimble_jbd_bms {
 
@@ -63,12 +66,6 @@ class NimbleJbdBms : public PollingComponent {
   bool is_connected() const { return this->conn_handle_ != 0xFFFF; }
   bool is_gatt_ready() const { return this->gatt_ready_; }
   uint64_t get_address() const { return this->address_; }
-  uint8_t get_own_addr_type() const { return this->own_addr_type_; }
-  void set_scanning(bool scanning) { this->scanning_ = scanning; }
-  bool is_scanning() const { return this->scanning_; }
-  void reset_scan_adv_count() { this->scan_adv_count_ = 0; }
-  void increment_scan_adv_count() { this->scan_adv_count_++; }
-  uint32_t get_scan_adv_count() const { return this->scan_adv_count_; }
 
   bool send_command(uint8_t command, uint8_t address, const uint8_t *data = nullptr, uint8_t data_len = 0);
   bool write_register(uint8_t address, uint16_t value);
@@ -77,6 +74,8 @@ class NimbleJbdBms : public PollingComponent {
   void on_notify_data(const uint8_t *data, size_t len);
   void start_connect();
   void schedule_reconnect();
+  void on_scan_timeout_();
+  int handle_gap_event_(struct ble_gap_event *event);
   void enable_notifications();
   void discover_services_();
   void start_char_discovery_(uint16_t conn_handle);
@@ -136,6 +135,7 @@ class NimbleJbdBms : public PollingComponent {
   std::string bitmask_to_string_(const char *const messages[], uint8_t messages_size, uint16_t mask) const;
 
   nimble_host::NimbleHost *host_{nullptr};
+  nimble_gap::NimbleGapClient gap_client_{};
   sensor::Sensor *state_of_charge_sensor_{nullptr};
   sensor::Sensor *total_voltage_sensor_{nullptr};
   sensor::Sensor *current_sensor_{nullptr};
@@ -170,14 +170,14 @@ class NimbleJbdBms : public PollingComponent {
   uint8_t no_response_count_{0};
   uint8_t mosfet_status_{255};
   uint32_t reconnect_at_ms_{0};
-  uint8_t own_addr_type_{0};
   bool connect_attempted_{false};
-  bool scanning_{false};
-  uint32_t scan_adv_count_{0};
+  bool gap_registered_{false};
   bool enable_authentication_{false};
   std::string password_{};
   uint32_t auth_timeout_start_{0};
   uint32_t auth_timeout_ms_{10000};
+
+  void ensure_gap_registered_();
 };
 
 }  // namespace esphome::nimble_jbd_bms

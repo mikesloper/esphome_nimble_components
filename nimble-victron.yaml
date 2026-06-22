@@ -29,6 +29,9 @@ esp32:
       execute_from_psram: true
       loop_task_stack_size: 16384
 
+nimble_host:
+  id: nimble_bt
+
 packages:
   wifi: !include wifi-nimble.yaml
   hardware: !include guition-esp32-p4-nimble.yaml

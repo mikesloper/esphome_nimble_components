@@ -18,7 +18,7 @@ CONF_COOLANT_SENSOR_ID = "coolant_temp_sensor"
 CONF_VOLTAGE_SENSOR_ID = "device_voltage_sensor"
 CONF_UPTIME_SENSOR_ID = "uptime_sensor"
 
-DEPENDENCIES = ["nimble_host", "sensor"]
+DEPENDENCIES = ["nimble_host", "nimble_gap", "sensor"]
 
 nimble_host_ns = cg.esphome_ns.namespace("nimble_host")
 NimbleHost = nimble_host_ns.class_("NimbleHost", cg.Component)

@@ -2,6 +2,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/core/helpers.h"
+#include "esphome/components/nimble_gap/nimble_gap.h"
 #include <cstdint>
 #include <string>
 
@@ -14,6 +15,8 @@ class TextSensor;
 namespace esphome::nimble_host {
 class NimbleHost;
 }
+
+struct ble_gap_event;
 
 namespace esphome::nimble_renogy {
 
@@ -48,16 +51,12 @@ class NimbleRenogy : public PollingComponent {
 
   bool is_connected() const { return this->conn_handle_ != 0xFFFF; }
   uint64_t get_address() const { return this->address_; }
-  uint8_t get_own_addr_type() const { return this->own_addr_type_; }
-  void set_scanning(bool scanning) { this->scanning_ = scanning; }
-  bool is_scanning() const { return this->scanning_; }
-  void reset_scan_adv_count() { this->scan_adv_count_ = 0; }
-  void increment_scan_adv_count() { this->scan_adv_count_++; }
-  uint32_t get_scan_adv_count() const { return this->scan_adv_count_; }
 
   void on_notify_data(const uint8_t *data, size_t len);
   void start_connect();
   void schedule_reconnect();
+  void on_scan_timeout_();
+  int handle_gap_event_(struct ble_gap_event *event);
   void enable_notifications();
   void discover_services_();
   void start_notify_char_discovery_(uint16_t conn_handle);
@@ -90,6 +89,7 @@ class NimbleRenogy : public PollingComponent {
 
  protected:
   nimble_host::NimbleHost *host_{nullptr};
+  nimble_gap::NimbleGapClient gap_client_{};
   text_sensor::TextSensor *charging_status_text_sensor_{nullptr};
   sensor::Sensor *battery_voltage_sensor_{nullptr};
   sensor::Sensor *battery_current_sensor_{nullptr};
@@ -104,10 +104,10 @@ class NimbleRenogy : public PollingComponent {
   uint64_t address_{0};
   bool auto_connect_{true};
   uint32_t reconnect_at_ms_{0};
-  uint8_t own_addr_type_{0};
   bool connect_attempted_{false};
-  bool scanning_{false};
-  uint32_t scan_adv_count_{0};
+  bool gap_registered_{false};
+
+  void ensure_gap_registered_();
 };
 
 }  // namespace esphome::nimble_renogy

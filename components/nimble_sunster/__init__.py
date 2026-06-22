@@ -25,7 +25,7 @@ CONF_HEATING_TEMPERATURE_SENSOR_ID = "heating_temperature_sensor"
 CONF_HEATER_LEVEL_NUMBER_ID = "heater_level_number"
 CONF_HEATER_TEMPERATURE_NUMBER_ID = "heater_temperature_number"
 
-DEPENDENCIES = ["nimble_host", "binary_sensor", "sensor", "text_sensor", "number"]
+DEPENDENCIES = ["nimble_host", "nimble_gap", "binary_sensor", "sensor", "text_sensor", "number"]
 
 lib_path = str(pathlib.Path(CORE.config_dir) / "lib")
 cg.add_build_flag(f'-I"{lib_path}"')
